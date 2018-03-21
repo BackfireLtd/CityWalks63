@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">City Walks 63</string>
-    <string name="map_button">Карта</string>
-    <string name="exit_button">Выход</string>
+    <string name="map_button">Перейти к карте</string>
     <string name="title_activity_map">Map</string>
+    <string name="menu_headline">Выберите один из вариантов построения прогулки.</string>
+    <string name="custom_route_button">Построить прогулку по своему маршруту
+        (задать начальную и конечную точки)</string>
+    <string name="load_route_button">Выбрать одну из существующих прогулок сообщества</string>
+    <string name="create_route_button">Добавить в сообщество свою прогулку</string>
 </resources>

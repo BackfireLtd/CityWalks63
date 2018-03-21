@@ -1,13 +1,17 @@
 package ru.apchola.team.citywalks63;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -25,22 +29,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
     }
 
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng samara = new LatLng(53.2, 50.15);
-        mMap.addMarker(new MarkerOptions().position(samara).title("Marker in Samara"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(samara));
+        LatLngBounds samara = new LatLngBounds(new LatLng(53.1, 50.15), new LatLng(53.30, 50.28));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(samara, 0));
     }
 }

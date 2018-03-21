@@ -13,21 +13,13 @@ public class MenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
 
-        Button mapButton = (Button)findViewById(R.id.map_button);
-        Button exitButton = (Button)findViewById(R.id.exit_bitton);
+        Button mapButton = findViewById(R.id.map_button);
 
         mapButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent toMap = new Intent(getApplicationContext(), MapActivity.class);
                 startActivity(toMap);
-            }
-        });
-
-        exitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                android.os.Process.killProcess(android.os.Process.myPid());
             }
         });
     }
