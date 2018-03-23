@@ -7,4 +7,10 @@
         (задать начальную и конечную точки)</string>
     <string name="load_route_button">Выбрать одну из существующих прогулок сообщества</string>
     <string name="create_route_button">Добавить в сообщество свою прогулку</string>
+    <string name="stella_rook">Ладья</string>
+    <string name="monument_of_glory">Монумент Славы</string>
+    <string name="kuibyshev_square">Площадь Куйбышева</string>
+    <string name="zhigulevsky_brewery">Жигулевский пивоваренный завод</string>
+    <string name="yl_2">Штурмовик Ил-2</string>
+    <string name="space_samara" translatable="false">Самара Космическая</string>
 </resources>
