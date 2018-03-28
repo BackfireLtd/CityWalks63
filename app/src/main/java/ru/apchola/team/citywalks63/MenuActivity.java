@@ -13,12 +13,23 @@ public class MenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
 
-        Button mapButton = findViewById(R.id.map_button);
+        Button customRouteButton = findViewById(R.id.custom_route_button);
+        Button mapOverviewButton = findViewById(R.id.map_overview_button);
 
-        mapButton.setOnClickListener(new View.OnClickListener() {
+        customRouteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent toMap = new Intent(getApplicationContext(), MapActivity.class);
+                toMap.putExtra("mode", "custom_route");
+                startActivity(toMap);
+            }
+        });
+
+        mapOverviewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent toMap = new Intent(getApplicationContext(), MapActivity.class);
+                toMap.putExtra("mode", "map_overview");
                 startActivity(toMap);
             }
         });

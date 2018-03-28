@@ -4,7 +4,10 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
+    <color name="pureWhite">#FFFFFF</color>
     <color name="lightSkyBlue">#87CEFA</color>
+    <color name="midBlue">#4b46dc</color>
+    <color name="realBlue">#2238e2</color>
     <color name="grayWhite">#EEEEEE</color>
     <color name="coral">#FF7F50</color>
     <color name="orchid">#DA70D6</color>

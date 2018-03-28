@@ -2,28 +2,21 @@ package ru.apchola.team.citywalks63;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.location.Criteria;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.media.AudioAttributesCompat;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -36,18 +29,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.maps.DirectionsApi;
-import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.TravelMode;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
@@ -56,14 +44,22 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     GeoApiContext geoApiContext = new GeoApiContext.Builder()
             .apiKey("AIzaSyDwjD8XlgKXQ_9sMnkKrxMzVnt2M4uDtdw")
             .build();
-    LocationManager locationManager;
-    Polyline route;
 
     ImageButton walkButton;
+    ImageButton addButton;
+    ImageButton deleteButton;
+    ImageButton acceptButton;
 
-    boolean markerFocused = false;
+    String mapMode;
+    boolean isMarkerFocused = false;
+    Marker focusedMarker;
     com.google.maps.model.LatLng userLocation = null;
     com.google.maps.model.LatLng destination = null;
+    ArrayList<com.google.maps.model.LatLng> places = new ArrayList<com.google.maps.model.LatLng>();
+    ArrayList<Marker> addedMarkers = new ArrayList<Marker>();
+    LocationManager locationManager;
+    DisplayMetrics displaymetrics;
+    Polyline route;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +69,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        mapMode = getIntent().getStringExtra("mode");
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        displaymetrics = getResources().getDisplayMetrics();
 
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -88,14 +88,62 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         onLocationChanged(location);
 
         walkButton = findViewById(R.id.walk_button);
+        addButton = findViewById(R.id.add_button);
+        deleteButton = findViewById(R.id.delete_button);
+        acceptButton = findViewById(R.id.accept_button);
 
         walkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ArrayList<com.google.maps.model.LatLng> places = new ArrayList<com.google.maps.model.LatLng>();
-                places.add(userLocation);
-                places.add(destination);
+                if(mapMode.equals("map_overview")) {
+                    places.clear();
+                    places.add(userLocation);
+                    places.add(destination);
+                    drawWalkPath(places);
+                }
+            }
+        });
+
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addedMarkers.add(focusedMarker);
+                places.add(new com.google.maps.model.LatLng(focusedMarker.getPosition().latitude, focusedMarker.getPosition().longitude));
                 drawWalkPath(places);
+                acceptButton.setVisibility(View.VISIBLE);
+                deleteButton.setVisibility(View.VISIBLE);
+                addButton.setVisibility(View.GONE);
+            }
+        });
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for(int i = 0; i < addedMarkers.size(); i++) {
+                    if(addedMarkers.get(i).equals(focusedMarker)) {
+                        addedMarkers.remove(i);
+                        places.remove(i + 1);
+                        break;
+                    }
+                }
+
+                if(places.size() >= 2)
+                    drawWalkPath(places);
+                else {
+                    route.remove();
+                    acceptButton.setVisibility(View.GONE);
+                }
+                deleteButton.setVisibility(View.GONE);
+                addButton.setVisibility(View.VISIBLE);
+            }
+        });
+
+        acceptButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addButton.setVisibility(View.GONE);
+                deleteButton.setVisibility(View.GONE);
+                acceptButton.setVisibility(View.GONE);
             }
         });
     }
@@ -104,13 +152,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        BitmapDrawable bitmapDraw=(BitmapDrawable) getResources().getDrawable(R.drawable.column_icon, null);
-        Bitmap b=bitmapDraw.getBitmap();
-        Bitmap columnMarker = Bitmap.createScaledBitmap(b, 150, 150, false);
+        Bitmap b = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.column_icon);
+        Bitmap columnMarker = Bitmap.createScaledBitmap(b, displaymetrics.heightPixels / 17, displaymetrics.heightPixels / 17, false);
 
         LatLngBounds samara = new LatLngBounds(new LatLng(53.1, 50.15), new LatLng(53.30, 50.28));
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(samara, 0));
-        mMap.setMaxZoomPreference(20);
+        mMap.setMaxZoomPreference(19);
         mMap.setMinZoomPreference(11);
 
         mMap.getUiSettings().setMapToolbarEnabled(false);
@@ -125,6 +172,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         {
             mMap.setMyLocationEnabled(true);
         }
+
+        if(mapMode.equals("custom_route"))
+            places.add(userLocation);
 
         //******** Достопримечательности
 
@@ -164,8 +214,23 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             @Override
             public boolean onMarkerClick(Marker marker) {
                 destination = new com.google.maps.model.LatLng(marker.getPosition().latitude, marker.getPosition().longitude);
-                markerFocused = true;
-                walkButton.setVisibility(View.VISIBLE);
+                isMarkerFocused = true;
+                focusedMarker = marker;
+                if(mapMode.equals("map_overview"))
+                    walkButton.setVisibility(View.VISIBLE);
+
+                else if(mapMode.equals("custom_route"))
+                {
+                    if(addedMarkers.contains(marker)) {
+                        deleteButton.setVisibility(View.VISIBLE);
+                        addButton.setVisibility(View.GONE);
+                    }
+
+                    else {
+                        addButton.setVisibility(View.VISIBLE);
+                        deleteButton.setVisibility(View.GONE);
+                    }
+                }
                 return false;
             }
         });
@@ -173,10 +238,16 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if(markerFocused)
+                if(isMarkerFocused)
                 {
-                    markerFocused = false;
-                    walkButton.setVisibility(View.GONE);
+                    isMarkerFocused = false;
+                    if(mapMode.equals("map_overview"))
+                        walkButton.setVisibility(View.GONE);
+
+                    else if(mapMode.equals("custom_route")) {
+                        addButton.setVisibility(View.GONE);
+                        deleteButton.setVisibility(View.GONE);
+                    }
                 }
             }
         });
@@ -210,24 +281,26 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback,
             e.printStackTrace();
         }
 
-        List<com.google.maps.model.LatLng> path = result.routes[0].overviewPolyline.decodePath();
+        if(result != null) {
+            List<com.google.maps.model.LatLng> path = result.routes[0].overviewPolyline.decodePath();
 
-        PolylineOptions line = new PolylineOptions();
+            PolylineOptions line = new PolylineOptions();
 
-        LatLngBounds.Builder latLngBuilder = new LatLngBounds.Builder();
+            LatLngBounds.Builder latLngBuilder = new LatLngBounds.Builder();
 
-        for (int i = 0; i < path.size(); i++) {
-            line.add(new com.google.android.gms.maps.model.LatLng(path.get(i).lat, path.get(i).lng));
-            latLngBuilder.include(new com.google.android.gms.maps.model.LatLng(path.get(i).lat, path.get(i).lng));
+            for (int i = 0; i < path.size(); i++) {
+                line.add(new com.google.android.gms.maps.model.LatLng(path.get(i).lat, path.get(i).lng));
+                latLngBuilder.include(new com.google.android.gms.maps.model.LatLng(path.get(i).lat, path.get(i).lng));
+            }
+
+            line.width(16f).color(R.color.lightSkyBlue);
+
+            route = mMap.addPolyline(line);
+
+            LatLngBounds latLngBounds = latLngBuilder.build();
+            CameraUpdate track = CameraUpdateFactory.newLatLngBounds(latLngBounds, displaymetrics.widthPixels, displaymetrics.heightPixels, 150);
+            mMap.moveCamera(track);
         }
-
-        line.width(16f).color(R.color.lightSkyBlue);
-
-        route = mMap.addPolyline(line);
-
-        LatLngBounds latLngBounds = latLngBuilder.build();
-        CameraUpdate track = CameraUpdateFactory.newLatLngBounds(latLngBounds, 100, 100, 25);//width это размер нашего экрана
-        mMap.moveCamera(track);
     }
 
     @Override
